@@ -94,6 +94,7 @@ def blackjack_game(player_name, player_money):
         player_money -= 25
     else:
         print("It's a tie!")
+        player_money += 0
 
     return player_money
 
@@ -107,6 +108,22 @@ def save_score(player_name, player_money):
 def create_scores_file():
     with open("scores.json", "w") as file:
         json.dump({}, file)
+
+def check_balance(player_name, player_money):
+    global scores
+    if player_money == 0:
+        print("You have run out of money!")
+        restart = input("Do you want to start again? (y/n): ").lower()
+        if restart == 'y':
+            player_money = 1000
+            scores[player_name] = player_money
+            save_score(player_name, player_money)
+            print("Welcome back, {}! You have been given $1000 to start again.".format(player_name))
+        else:
+            print("Thanks for playing! Your final balance is ${}.".format(player_money))
+            return False, player_money  # indicate game loop should exit and return updated player_money
+    return True, player_money  # indicate game loop should continue and return updated player_money
+
 
 if __name__ == "__main__":
     if not os.path.isfile("scores.json"):
@@ -131,12 +148,19 @@ if __name__ == "__main__":
     while True:
         if player_money < 25:
             print("You don't have enough money to play another hand.")
-            break
+            check_result, player_money = check_balance(player_name, player_money)
+            if not check_result:
+                break
         print("Current balance: ${}".format(player_money))
         player_money = blackjack_game(player_name, player_money)
         save_score(player_name, player_money)
+        check_result, player_money = check_balance(player_name, player_money)
+        if not check_result:
+            break
         play_again = input("Do you want to play again? (y/n): ").lower()
         if play_again != 'y':
             break
 
-    print("Thanks for playing! Your final balance is ${}.".format(player_money))
+
+    if player_money > 0:
+        print("Thanks for playing! Your final balance is ${}.".format(player_money))
